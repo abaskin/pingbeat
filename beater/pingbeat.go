@@ -4,18 +4,19 @@ import (
 	"errors"
 	"fmt"
 	// "github.com/davecgh/go-spew/spew"
+	"net"
+	"os"
+	"time"
+
+	"github.com/abaskin/pingbeat/config"
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/libbeat/publisher"
-	"github.com/joshuar/pingbeat/config"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
 	"gopkg.in/go-playground/pool.v3"
-	"net"
-	"os"
-	"time"
 )
 
 type Pingbeat struct {
@@ -307,21 +308,21 @@ func SendPing(conn *icmp.PacketConn, timeout time.Duration, seq int, addr net.Ad
 	}
 }
 
-// FetchDetails takes a address as a string and returns the name and tag
+// FetchDetails takes a address as a string and returns the name, desc and tag
 // associated with that address in the Pingbeat struct
-func (bt *Pingbeat) FetchDetails(t string) (string, []string) {
+func (bt *Pingbeat) FetchDetails(t string) (string, string, []string) {
 	if _, found := bt.targets[t]; found {
-		return bt.targets[t].Name, bt.targets[t].Tags
+		return bt.targets[t].Name, bt.targets[t].Desc, bt.targets[t].Tags
 	} else {
 		logp.Err("Error: %s not found in Pingbeat targets!", t)
 		var tags []string
 		tags[0] = fmt.Sprintf("Error: %s not found in Pingbeat targets!", t)
-		return t, tags
+		return "err", "", tags
 	}
 }
 
 func (bt *Pingbeat) ProcessPing(ping *PingInfo) {
-	name, tags := bt.FetchDetails(ping.Target)
+	name, desc, tags := bt.FetchDetails(ping.Target)
 	if name == "err" {
 		logp.Err("No details for %v in targets!", ping.Target)
 	} else {
@@ -331,6 +332,7 @@ func (bt *Pingbeat) ProcessPing(ping *PingInfo) {
 			"target.name": name,
 			"target.addr": ping.Target,
 			"target.tags": tags,
+			"target.desc": desc,
 			"rtt":         milliSeconds(ping.RTT),
 		}
 		logp.Debug("pingbeat", "Processed ping %v for %v (%v): %v", ping.Seq, name, ping.Target, ping.RTT)
@@ -339,7 +341,7 @@ func (bt *Pingbeat) ProcessPing(ping *PingInfo) {
 }
 
 func (bt *Pingbeat) ProcessError(target string, error string) {
-	name, tags := bt.FetchDetails(target)
+	name, desc, tags := bt.FetchDetails(target)
 	if name == "err" {
 		logp.Err("No details for %v in targets!", target)
 	} else {
@@ -349,6 +351,7 @@ func (bt *Pingbeat) ProcessError(target string, error string) {
 			"target.name": name,
 			"target.addr": target,
 			"target.tags": tags,
+			"target.desc": desc,
 			"loss":        true,
 			"reason":      error,
 		}

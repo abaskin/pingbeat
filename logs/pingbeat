@@ -1,0 +1,13 @@
+2017-03-05T11:10:01+07:00 INFO Setup Beat: pingbeat; Version: 5.3.0
+2017-03-05T11:10:01+07:00 INFO Activated console as output plugin.
+2017-03-05T11:10:01+07:00 INFO Publisher name: Andres-MacBook-Pro.local
+2017-03-05T11:10:01+07:00 INFO Flush Interval set to: 1s
+2017-03-05T11:10:01+07:00 INFO Max Bulk Size set to: 2048
+2017-03-05T11:10:01+07:00 INFO pingbeat start running.
+2017-03-05T11:10:01+07:00 INFO pingbeat is running! Hit CTRL-C to stop it.
+2017-03-05T11:10:01+07:00 INFO Using udp4 connection
+2017-03-05T11:10:31+07:00 INFO No non-zero metrics in the last 30s
+2017-03-05T11:11:01+07:00 INFO No non-zero metrics in the last 30s
+2017-03-05T11:11:23+07:00 INFO Total non-zero values: 
+2017-03-05T11:11:23+07:00 INFO Uptime: 1m21.344425908s
+2017-03-05T11:11:23+07:00 INFO pingbeat stopped.

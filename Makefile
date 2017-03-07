@@ -1,5 +1,5 @@
 BEAT_NAME=pingbeat
-BEAT_PATH=github.com/joshuar/pingbeat
+BEAT_PATH=github.com/abaskin/pingbeat
 BEAT_GOPATH=$(firstword $(subst :, ,${GOPATH}))
 BEAT_URL=https://${BEAT_PATH}
 SYSTEM_TESTS=false

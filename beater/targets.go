@@ -3,10 +3,11 @@ package beater
 import (
 	"errors"
 	// "github.com/davecgh/go-spew/spew"
-	"github.com/elastic/beats/libbeat/common"
+	"net"
+
+	"github.com/abaskin/pingbeat/config"
 	"github.com/elastic/beats/libbeat/logp"
 	"gopkg.in/go-playground/pool.v3"
-	"net"
 )
 
 type Target struct {
@@ -16,38 +17,27 @@ type Target struct {
 	Desc string
 }
 
-type targetConfig struct {
-	Name string   `config:"name"`
-	Tags []string `config:"tags"`
-	Desc string   `config:"desc"`
-}
-
-func NewTargets(cfg []*common.Config, privileged bool, ipv4 bool, ipv6 bool) map[string]Target {
+func NewTargets(targetList []config.TargetConfig, privileged bool, ipv4 bool, ipv6 bool) map[string]Target {
 	targets := make(map[string]Target)
 	t := pool.New()
 	defer t.Close()
-	for _, c := range cfg {
-		target := &targetConfig{}
-		err := c.Unpack(target)
-		if err != nil {
-			logp.Err("Error reading target config: %v", err)
+	for _, target := range targetList {
+		work := t.Queue(AddTarget(target, privileged, ipv4, ipv6))
+		work.Wait()
+		if err := work.Error(); err != nil {
+			logp.Err("Failed to add target %v!", work.Value().(*Target).Name)
 		} else {
-			work := t.Queue(AddTarget(target, privileged, ipv4, ipv6))
-			work.Wait()
-			if err := work.Error(); err != nil {
-				logp.Err("Failed to add target %v!", work.Value().(*Target).Name)
-			} else {
-				thisTarget := work.Value().(*Target)
-				targets[thisTarget.Addr.String()] = *thisTarget
-			}
+			thisTarget := work.Value().(*Target)
+			targets[thisTarget.Addr.String()] = *thisTarget
 		}
 	}
+
 	return targets
 }
 
 // AddTarget takes a target name and tag, fetches the IP addresses associated
 // with it and adds them to the Pingbeat struct
-func AddTarget(target *targetConfig, privileged bool, ipv4 bool, ipv6 bool) pool.WorkFunc {
+func AddTarget(target config.TargetConfig, privileged bool, ipv4 bool, ipv6 bool) pool.WorkFunc {
 	return func(wu pool.WorkUnit) (interface{}, error) {
 		if wu.IsCancelled() {
 			// return values not used

@@ -1,4 +1,4 @@
-package: github.com/joshuar/pingbeat
+package: github.com/abaskin/pingbeat
 ignore:
   - plugin
 import:
